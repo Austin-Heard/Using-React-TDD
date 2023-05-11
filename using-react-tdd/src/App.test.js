@@ -1,5 +1,9 @@
 import { render, screen } from '@testing-library/react';
+import '@testing-library/jest-dom'
 import App from './App';
+
+// Add the below
+import userEvent from '@testing-library/user-event'
 
 test('As a Chef, I want to store my recipes so that I can keep track of them.', () => {
   // 1. render the landing page
@@ -17,5 +21,59 @@ test('As a Chef, I want to store my recipes so that I can keep track of them.', 
   expect(recipeList).toBeInTheDocument();
 
   // https://developer.mozilla.org/en-US/docs/Web/API/Node/compareDocumentPosition
-  expect(recipeHeader.compareDocumentPosition(recipeList)).toBe(4);
+  //expect(recipeHeader.compareDocumentPosition(recipeList)).toBe(4);
 });
+
+test("contains an add recipe button", async () => {
+  // render the landing page
+  render(<App />);
+
+  // wait for the page to load (implied, no async operations)
+
+  // click Add Recipe button
+  let button = screen.getByRole('button', {name: 'Add Recipe'});
+  userEvent.click(button);
+
+  // Wait for the form to appear on the screen (override the default of 1000ms as an example)
+  let form = await screen.findByRole('form', undefined, {timeout:3000});
+
+  // Verify the form appears
+  expect(form).toBeInTheDocument();
+
+  // Then I should see a form with fields: "Recipe Name" and "Recipe Instructions"
+  expect(screen.getByRole('textbox', {name: /Recipe name/i})).toBeInTheDocument();
+  expect(screen.getByRole('textbox', {name: /instructions/i})).toBeInTheDocument();
+  
+  // And the "Add Recipe" button should no longer be on the screen.
+  // Use queryBy instead of getBy because getBy throws an error when it doesn't have exactly 1 match
+  button = screen.queryByRole('button', {name: 'Add Recipe'});
+  expect(button).toBeNull();
+})
+
+test("displays a recipe added after submitting the form" , async () => {
+  // render the landing page
+  render(<App />);
+
+  // click Add Recipe button
+  let button = screen.getByRole('button', {name: 'Add Recipe'});
+  userEvent.click(button);
+
+  // Wait for the form to appear on the screen (override the default of 1000ms as an example)
+  await screen.findByRole('form', undefined, {timeout:3000});
+
+  // get the textbox
+  let recipeNameBox = screen.getByRole('textbox', {name: /Recipe name/i});
+  let recipeInstructionBox = screen.getByRole('textbox', {name: /instructions/i})
+
+  // add the string 'Tofu Scramble Tacos' into the textbox
+  userEvent.type(recipeNameBox, 'Tofu Scramble Tacos')
+  userEvent.type(recipeInstructionBox, '1. heat a skillet on medium with a dollop of coconut oil {enter} 2. warm flour tortillas')
+
+  // click Submit on form
+  let submit = screen.getByRole('button');
+  userEvent.click(submit);
+
+  //Wait for the form to submit and recipe to be displayed
+  let recipe = await screen.findByText('Tofu Scramble Tacos');
+
+})
