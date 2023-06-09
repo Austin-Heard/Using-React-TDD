@@ -1,1 +1,1 @@
-# http-server-challenge
+# movielist-miniapp
